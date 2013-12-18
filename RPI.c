@@ -7,7 +7,7 @@
 peripheral gpio = {GPIO_BASE};
 EventListener* interrupts;
 
-int initializePeripheral() {
+int8_t initializePeripheral() {
   peripheral* p = &gpio;
 
   /* physical address using mmap on dev/mem
@@ -37,7 +37,8 @@ int initializePeripheral() {
 
 
 
-void unmap_peripheral(struct peripheral* p) {
+void unmap_peripheral() {
+  peripheral* p = &gpio;
   munmap(p->_map, BLOCK_SIZE);
   close(p->_mem_fd);
 }
