@@ -35,8 +35,6 @@
 
 /*constants used to set an interrupt*/
 enum events {
-  _RISING, //0 to 1
-  _FALLING, //1 to 0
   _HIGH, //pin is high
   _LOW //pin is low
 };
@@ -46,7 +44,12 @@ enum events {
 enum errors {
   WRONG_ARGUMENTS = -1,
   EVENT_LISTENER_FULL = -2,
-  EVENT_LISTENER_ERROR_LISTENING = -3
+  EVENT_LISTENER_ERROR_LISTENING = -3,
+  ERROR_OPENING_FILE = -4,
+  ERROR_MAPPING = -5,
+  ERROR_ALLOCATING_MEMORY = -6,
+  ERROR_MUTEX = -7,
+  ERROR_THREAD = -8
 };
 
 
@@ -66,16 +69,18 @@ typedef struct ISR ISR;
 struct ISR { //mapping ISR - interrupt number
   void (*function)(void*);
   uint8_t _id; //1.._MAX_ISR
-  uint8_t _pin; 
+  uint8_t _pin;  
   uint8_t _event;
-  uint8_t _action;
+  pthread_t _thread;
+  pthread_mutex_t _lockUser;   //to be used by user
+  int8_t _listening;
 };
 
 //for interrupts
 struct EventListener {
   uint8_t _listening; //listen while _listening is set to 1, stop when its 0
   ISR _ISRarray[_MAX_ISR]; //array with all ISRs 
-  pthread_t _listener;
+  pthread_t _listener; //interrupt handler thread
   pthread_mutex_t _lock;
 };
 
@@ -84,12 +89,14 @@ struct EventListener {
 
 extern peripheral gpio;
 
-/*
-  FOR USER 
+/* ---------------------------------------
+   -------------  FOR USER  --------------
+   ---------------------------------------
 */
 
+
 /*initialize*/
-int map_peripheral(peripheral* p);
+int initializePeripheral();
 
 
 /* port manipulation */
@@ -99,10 +106,15 @@ int8_t digitalWrite(uint8_t pin, uint8_t val);
 
 /*set interrupts*/
 int8_t initializeListener();
-int8_t attachEventListener(uint8_t pin, uint8_t event, void (*function)(void*));
+int8_t attachEventListener(uint8_t pin, uint8_t event, void (*function)(void*), int8_t useMutex);
 int8_t beginListening();
 void stopListening();
 void destroyListener();
+
+/*helpful functions*/
+int8_t lock_start(int8_t key);
+int8_t lock_end(int8_t key);
+
 
 
 
