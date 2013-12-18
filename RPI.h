@@ -96,8 +96,8 @@ extern peripheral gpio;
 
 
 /*initialize*/
-int initializePeripheral();
-
+int8_t initializePeripheral();
+void closePeripheral();
 
 /* port manipulation */
 int8_t digitalRead(uint8_t pin);
