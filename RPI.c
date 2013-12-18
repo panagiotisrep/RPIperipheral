@@ -37,7 +37,7 @@ int8_t initializePeripheral() {
 
 
 
-void unmap_peripheral() {
+void closePeripheral() {
   peripheral* p = &gpio;
   munmap(p->_map, BLOCK_SIZE);
   close(p->_mem_fd);
