@@ -200,13 +200,15 @@ int8_t attachEventListener(uint8_t pin, uint8_t event, void (*task)(void*), int8
       interrupts->_ISRarray[i]._event = event;
       interrupts->_ISRarray[i]._pin = pin;
       interrupts->_ISRarray[i]._listening = 0;
-      
+      interrupts->_ISRarray[i]._hasLock = 0;
 
       /*if useMutex == 1*/
-
-      if (pthread_mutex_init(&(interrupts->_ISRarray[i]._lockUser), NULL)) {
-	interrupts->_ISRarray[i]._id = 0;
-	return ERROR_MUTEX;
+      if (useMutex) {
+	if (pthread_mutex_init(&(interrupts->_ISRarray[i]._lockUser), NULL)) {
+	  interrupts->_ISRarray[i]._id = 0;
+	  return ERROR_MUTEX;
+	}
+	interrupts->_ISRarray[i]._hasLock = 1;
       }
 
       return i+1; //return id
@@ -305,7 +307,7 @@ void thread_listening(void* arg) {
 
 
 
-void stopListener() {
+void stopListening() {
   /*set the EventListener to 0 and wait the thread to exit*/
 
   pthread_mutex_lock(&(interrupts->_lock));
@@ -317,10 +319,64 @@ void stopListener() {
 
 
 void destroyListener() {
-  stopListener();
+  stopListening();
   pthread_mutex_destroy(&(interrupts->_lock));
+
+  uint8_t i;
+
+  for (i=0 ; i<_MAX_ISR ; i++) {
+    if (interrupts->_ISRarray[i]._hasLock)
+      pthread_mutex_destroy(&(interrupts->_ISRarray[i]._lockUser));
+  }
+}
+
+
+
+int8_t lock_start(uint8_t key) {
+  uint8_t i, keyOk;
+  keyOk = 0;
+
+  //check if the key exists
+  for (i=0 ; i<_MAX_ISR ; ++i)
+    if (interrupts->_ISRarray[i]._id == key) {
+      keyOk = 1;
+      break;
+    }
+
+  //if key doesnt exists
+  if (keyOk == 0)
+    return WRONG_ARGUMENTS;
+
+  if (interrupts->_ISRarray[i]._hasLock == 0) 
+    return MUTEX_NOT_INITIALIZED;
+  
+  pthread_mutex_lock(&(interrupts->_ISRarray[key]._lockUser));
+
+  return 0;
 }
 
 
 
 
+int8_t lock_end(uint8_t key) {
+ uint8_t i, keyOk;
+  keyOk = 0;
+
+
+  //check if the key exists
+  for (i=0 ; i<_MAX_ISR ; ++i)
+    if (interrupts->_ISRarray[i]._id == key) {
+      keyOk = 1;
+      break;
+    }
+
+  //if key doesnt exists
+  if (keyOk == 0)
+    return WRONG_ARGUMENTS;
+
+  if (interrupts->_ISRarray[i]._hasLock == 0) 
+    return MUTEX_NOT_INITIALIZED;
+
+  pthread_mutex_unlock(&(interrupts->_ISRarray[key]._lockUser));
+  return 0;
+}

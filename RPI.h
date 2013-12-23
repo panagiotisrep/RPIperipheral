@@ -49,7 +49,8 @@ enum errors {
   ERROR_MAPPING = -5,
   ERROR_ALLOCATING_MEMORY = -6,
   ERROR_MUTEX = -7,
-  ERROR_THREAD = -8
+  ERROR_THREAD = -8,
+  MUTEX_NOT_INITIALIZED = -9
 };
 
 
@@ -74,6 +75,7 @@ struct ISR { //mapping ISR - interrupt number
   pthread_t _thread;
   pthread_mutex_t _lockUser;   //to be used by user
   int8_t _listening;
+  uint8_t _hasLock; //1 if mutex initialized, else 0
 };
 
 //for interrupts
@@ -112,8 +114,8 @@ void stopListening();
 void destroyListener();
 
 /*helpful functions*/
-int8_t lock_start(int8_t key);
-int8_t lock_end(int8_t key);
+int8_t lock_start(uint8_t key);
+int8_t lock_end(uint8_t key);
 
 
 
