@@ -1,3 +1,6 @@
+// MIT License
+// Copyright (c) 2021 Panagiotis Repouskos
+
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/types.h>
