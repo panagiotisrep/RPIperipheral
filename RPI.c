@@ -1,3 +1,6 @@
+// MIT License
+// Copyright (c) 2021 Panagiotis Repouskos
+
 #include "RPI.h"
 #include <fcntl.h>
 #include <stdlib.h>
